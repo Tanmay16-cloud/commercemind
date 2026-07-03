@@ -1,0 +1,17 @@
+from fastapi.testclient import TestClient
+
+from commercemind.main import app
+
+
+client = TestClient(app)
+
+
+def test_health_check_returns_ok() -> None:
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["app"] == "CommerceMind"
+    assert payload["environment"] == "development"
