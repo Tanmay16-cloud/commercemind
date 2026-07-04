@@ -1,13 +1,24 @@
 import polars as pl
 
 from commercemind.retrieval.baseline import LexicalRetriever
+from commercemind.retrieval.hybrid import HybridRetriever, SearchRetriever
+from commercemind.retrieval.vector import VectorRetriever
 from commercemind.schemas import ItemResult, SearchRequest, SearchResponse
 
 
 class SearchService:
-    def __init__(self, products: pl.DataFrame | None = None) -> None:
+    def __init__(
+        self,
+        products: pl.DataFrame | None = None,
+        retriever: SearchRetriever | None = None,
+    ) -> None:
         self._products = products if products is not None else _default_products()
-        self._retriever = LexicalRetriever(self._products)
+        self._retriever = retriever or HybridRetriever(
+            [
+                LexicalRetriever(self._products),
+                VectorRetriever(self._products),
+            ]
+        )
 
     def search(self, request: SearchRequest) -> SearchResponse:
         normalized_query = request.query.strip()
