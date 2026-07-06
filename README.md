@@ -1,6 +1,6 @@
 # CommerceMind
 
-CommerceMind is a product discovery service for e-commerce catalogs. It combines data ingestion, baseline retrieval, offline evaluation, and API serving as the foundation for semantic search and personalized recommendations.
+CommerceMind is a product discovery service for e-commerce catalogs. It combines data ingestion, lexical and semantic retrieval, ranking, personalized recommendations, offline evaluation, database persistence, and API serving.
 
 ## Goals
 
@@ -26,10 +26,12 @@ Raw dataset
 -> feature engineering
 -> baseline retrieval
 -> dense vector retrieval
--> supervised ranking
--> re-ranking rules
+-> hybrid candidate generation
+-> ranking
+-> personalized recommendations
+-> offline evaluation reports
+-> storage repositories
 -> FastAPI service
--> dashboard and monitoring
 ```
 
 ## Recommended Dataset
@@ -52,23 +54,27 @@ The dataset is useful because it includes user-item interactions, ratings, times
 2. Data ingestion and cleaning
 3. Baseline retrieval models
 4. Semantic retrieval with vector search
-5. Two-tower retrieval model
-6. Supervised ranking model
-7. Diversity-aware re-ranking
-8. FastAPI serving layer
-9. Experiment tracking and reproducible pipelines
-10. Monitoring and drift checks
-11. Dashboard and operational views
-12. Deployment documentation
+5. Hybrid retrieval with rank fusion
+6. Feature-based ranking
+7. Personalized recommendations
+8. Database persistence layer
+9. Offline experiment reporting
+10. Real dataset integration
+11. Persistent FAISS vector indexes
+12. Learning-to-rank model training
+13. Docker and deployment documentation
 
 ## Current Status
 
-- FastAPI service with health and search endpoints
+- FastAPI service with health, search, and recommendation endpoints
 - Typed request and response schemas
 - Dataset path management, ingestion, normalization, and materialization
-- Lexical and popularity retrieval baselines
-- Retrieval metrics and evaluation reports
-- Test coverage for API, data pipeline, retrieval, and evaluation modules
+- Lexical, semantic vector, hybrid, and popularity retrieval
+- Feature-based ranking over retrieved candidates
+- Personalized recommendations from interaction history
+- SQLAlchemy storage models and repositories for products and interactions
+- Retrieval and recommendation metrics with offline experiment reports
+- Test coverage for API, data pipeline, retrieval, ranking, recommendations, storage, and evaluation modules
 
 ## Development
 
@@ -84,4 +90,30 @@ Run tests:
 
 ```powershell
 python -m pytest
+```
+
+Run the API:
+
+```powershell
+python -m uvicorn commercemind.main:app --reload
+```
+
+Open the interactive API docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Example requests:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/search -ContentType "application/json" -Body '{"query":"running shoes","top_k":5}'
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/recommendations -ContentType "application/json" -Body '{"user_id":"user-runner","top_k":5}'
+```
+
+If the local `.venv` launcher points to a missing Python installation, recreate the environment:
+
+```powershell
+uv venv --python 3.12 .venv
+uv pip install -e ".[dev]"
 ```

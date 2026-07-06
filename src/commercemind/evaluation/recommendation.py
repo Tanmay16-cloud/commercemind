@@ -6,30 +6,30 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Protocol
 
-from commercemind.retrieval.baseline import RetrievalCandidate
 from commercemind.retrieval.metrics import (
     hit_rate_at_k,
     precision_at_k,
     recall_at_k,
     reciprocal_rank_at_k,
 )
+from commercemind.schemas import RecommendationRequest, RecommendationResponse
 
 
-class SearchRetriever(Protocol):
-    def retrieve(self, query: str, top_k: int) -> list[RetrievalCandidate]:
+class Recommender(Protocol):
+    def recommend(self, request: RecommendationRequest) -> RecommendationResponse:
         ...
 
 
 @dataclass(frozen=True)
-class RetrievalEvaluationCase:
-    query: str
+class RecommendationEvaluationCase:
+    user_id: str
     relevant_item_ids: set[str]
 
 
 @dataclass(frozen=True)
-class RetrievalCaseMetrics:
-    query: str
-    retrieved_item_ids: list[str]
+class RecommendationCaseMetrics:
+    user_id: str
+    recommended_item_ids: list[str]
     relevant_item_ids: list[str]
     precision_at_k: float
     recall_at_k: float
@@ -38,7 +38,7 @@ class RetrievalCaseMetrics:
 
 
 @dataclass(frozen=True)
-class RetrievalEvaluationSummary:
+class RecommendationEvaluationSummary:
     case_count: int
     k: int
     mean_precision_at_k: float
@@ -48,28 +48,28 @@ class RetrievalEvaluationSummary:
 
 
 @dataclass(frozen=True)
-class RetrievalEvaluationReport:
-    summary: RetrievalEvaluationSummary
-    cases: list[RetrievalCaseMetrics]
+class RecommendationEvaluationReport:
+    summary: RecommendationEvaluationSummary
+    cases: list[RecommendationCaseMetrics]
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
 
 
-def evaluate_search_retriever(
-    retriever: SearchRetriever,
-    cases: list[RetrievalEvaluationCase],
+def evaluate_recommender(
+    recommender: Recommender,
+    cases: list[RecommendationEvaluationCase],
     *,
     k: int,
-) -> RetrievalEvaluationReport:
+) -> RecommendationEvaluationReport:
     if k <= 0:
         raise ValueError("k must be positive")
     if not cases:
         raise ValueError("at least one evaluation case is required")
 
-    case_metrics = [_evaluate_case(retriever, case, k) for case in cases]
+    case_metrics = [_evaluate_case(recommender, case, k) for case in cases]
 
-    summary = RetrievalEvaluationSummary(
+    summary = RecommendationEvaluationSummary(
         case_count=len(case_metrics),
         k=k,
         mean_precision_at_k=_mean(metric.precision_at_k for metric in case_metrics),
@@ -80,32 +80,32 @@ def evaluate_search_retriever(
         ),
     )
 
-    return RetrievalEvaluationReport(summary=summary, cases=case_metrics)
+    return RecommendationEvaluationReport(summary=summary, cases=case_metrics)
 
 
-def write_retrieval_report(report: RetrievalEvaluationReport, path: Path) -> None:
+def write_recommendation_report(report: RecommendationEvaluationReport, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report.to_dict(), indent=2), encoding="utf-8")
 
 
 def _evaluate_case(
-    retriever: SearchRetriever,
-    case: RetrievalEvaluationCase,
+    recommender: Recommender,
+    case: RecommendationEvaluationCase,
     k: int,
-) -> RetrievalCaseMetrics:
-    candidates = retriever.retrieve(case.query, top_k=k)
-    retrieved_item_ids = [candidate.item_id for candidate in candidates]
+) -> RecommendationCaseMetrics:
+    response = recommender.recommend(RecommendationRequest(user_id=case.user_id, top_k=k))
+    recommended_item_ids = [item.item_id for item in response.results]
 
-    return RetrievalCaseMetrics(
-        query=case.query,
-        retrieved_item_ids=retrieved_item_ids,
+    return RecommendationCaseMetrics(
+        user_id=case.user_id,
+        recommended_item_ids=recommended_item_ids,
         relevant_item_ids=sorted(case.relevant_item_ids),
-        precision_at_k=precision_at_k(case.relevant_item_ids, retrieved_item_ids, k),
-        recall_at_k=recall_at_k(case.relevant_item_ids, retrieved_item_ids, k),
-        hit_rate_at_k=hit_rate_at_k(case.relevant_item_ids, retrieved_item_ids, k),
+        precision_at_k=precision_at_k(case.relevant_item_ids, recommended_item_ids, k),
+        recall_at_k=recall_at_k(case.relevant_item_ids, recommended_item_ids, k),
+        hit_rate_at_k=hit_rate_at_k(case.relevant_item_ids, recommended_item_ids, k),
         reciprocal_rank_at_k=reciprocal_rank_at_k(
             case.relevant_item_ids,
-            retrieved_item_ids,
+            recommended_item_ids,
             k,
         ),
     )

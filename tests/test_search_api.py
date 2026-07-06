@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 
 from commercemind.main import app
 
-
 client = TestClient(app)
 
 
@@ -19,7 +18,7 @@ def test_search_endpoint_returns_baseline_result() -> None:
 
     payload = response.json()
     assert payload["query"] == "running shoes"
-    assert len(payload["results"]) == 1
+    assert len(payload["results"]) >= 1
     assert payload["results"][0]["item_id"] == "sku-running-shoes-001"
     assert payload["results"][0]["title"] == "Running Shoes"
     assert payload["results"][0]["score"] > 0

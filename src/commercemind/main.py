@@ -2,12 +2,20 @@ from fastapi import FastAPI
 
 from commercemind.config import get_settings
 from commercemind.logging import get_logger
-from commercemind.schemas import HealthResponse, SearchRequest, SearchResponse
+from commercemind.schemas import (
+    HealthResponse,
+    RecommendationRequest,
+    RecommendationResponse,
+    SearchRequest,
+    SearchResponse,
+)
+from commercemind.services.recommendations import RecommendationService
 from commercemind.services.search import SearchService
 
 settings = get_settings()
 logger = get_logger(__name__)
 search_service = SearchService()
+recommendation_service = RecommendationService()
 
 app = FastAPI(
     title=settings.app_name,
@@ -30,3 +38,13 @@ def health_check() -> HealthResponse:
 def search(request: SearchRequest) -> SearchResponse:
     logger.info("search_requested", query=request.query, top_k=request.top_k)
     return search_service.search(request)
+
+
+@app.post("/recommendations", response_model=RecommendationResponse)
+def recommend(request: RecommendationRequest) -> RecommendationResponse:
+    logger.info(
+        "recommendations_requested",
+        user_id=request.user_id,
+        top_k=request.top_k,
+    )
+    return recommendation_service.recommend(request)

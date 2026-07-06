@@ -1,9 +1,11 @@
 import polars as pl
 
+from commercemind.ranking.rankers import LinearProductRanker, ProductRanker
 from commercemind.retrieval.baseline import LexicalRetriever
 from commercemind.retrieval.hybrid import HybridRetriever, SearchRetriever
 from commercemind.retrieval.vector import VectorRetriever
 from commercemind.schemas import ItemResult, SearchRequest, SearchResponse
+from commercemind.services.sample_data import default_products
 
 
 class SearchService:
@@ -11,42 +13,34 @@ class SearchService:
         self,
         products: pl.DataFrame | None = None,
         retriever: SearchRetriever | None = None,
+        ranker: ProductRanker | None = None,
+        candidate_pool_multiplier: int = 5,
     ) -> None:
-        self._products = products if products is not None else _default_products()
+        if candidate_pool_multiplier <= 0:
+            raise ValueError("candidate_pool_multiplier must be positive")
+
+        self._products = products if products is not None else default_products()
         self._retriever = retriever or HybridRetriever(
             [
                 LexicalRetriever(self._products),
                 VectorRetriever(self._products),
             ]
         )
+        self._ranker = ranker or LinearProductRanker(self._products)
+        self._candidate_pool_multiplier = candidate_pool_multiplier
 
     def search(self, request: SearchRequest) -> SearchResponse:
         normalized_query = request.query.strip()
-        candidates = self._retriever.retrieve(normalized_query, request.top_k)
+        candidate_pool_size = request.top_k * self._candidate_pool_multiplier
+        candidates = self._retriever.retrieve(normalized_query, candidate_pool_size)
+        ranked_candidates = self._ranker.rank(normalized_query, candidates, request.top_k)
         results = [
             ItemResult(
                 item_id=candidate.item_id,
                 title=candidate.title,
                 score=candidate.score,
             )
-            for candidate in candidates
+            for candidate in ranked_candidates
         ]
 
         return SearchResponse(query=normalized_query, results=results)
-
-
-def _default_products() -> pl.DataFrame:
-    return pl.DataFrame(
-        {
-            "item_id": ["sku-running-shoes-001", "sku-gym-shirt-001", "sku-headphones-001"],
-            "title": ["Running Shoes", "Gym T-Shirt", "Wireless Headphones"],
-            "category": ["Footwear", "Apparel", "Electronics"],
-            "brand": ["StrideLab", "StrideLab", "NorthAudio"],
-            "description": [
-                "Lightweight shoes for road running and daily training.",
-                "Breathable shirt for workouts and gym sessions.",
-                "Bluetooth headphones for music and calls.",
-            ],
-            "price": [2999.0, 999.0, 2499.0],
-        }
-    )

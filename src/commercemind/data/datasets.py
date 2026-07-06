@@ -3,7 +3,6 @@ from pathlib import Path
 
 from commercemind.config import get_settings
 
-
 DEFAULT_DATASET_NAME = "amazon_fashion"
 
 

@@ -6,7 +6,12 @@ import numpy as np
 import polars as pl
 
 from commercemind.retrieval.baseline import RetrievalCandidate, tokenize
-from commercemind.retrieval.embeddings import HashingTextEmbedder, TextEmbedder, cosine_similarity, weighted_text
+from commercemind.retrieval.embeddings import (
+    HashingTextEmbedder,
+    TextEmbedder,
+    cosine_similarity,
+    weighted_text,
+)
 
 
 @dataclass(frozen=True)
@@ -20,7 +25,9 @@ class VectorRetriever:
     def __init__(self, products: pl.DataFrame, embedder: TextEmbedder | None = None) -> None:
         self._embedder = embedder or HashingTextEmbedder()
         self._documents = [_product_document(row) for row in products.iter_rows(named=True)]
-        self._document_vectors = self._embedder.encode([document.text for document in self._documents])
+        self._document_vectors = self._embedder.encode(
+            [document.text for document in self._documents]
+        )
 
     def retrieve(self, query: str, top_k: int) -> list[RetrievalCandidate]:
         if top_k <= 0 or not tokenize(query):

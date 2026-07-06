@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from hashlib import blake2b
-from typing import Protocol, Sequence
+from typing import Protocol
 
 import numpy as np
 

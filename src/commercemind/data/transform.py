@@ -21,7 +21,9 @@ def _optional_column(frame: pl.DataFrame, candidates: list[str], *, dtype: pl.Da
 
 def normalize_products(products: pl.DataFrame) -> pl.DataFrame:
     return products.select(
-        _required_column(products, ["item_id", "parent_asin", "asin"], dtype=pl.Utf8).alias("item_id"),
+        _required_column(products, ["item_id", "parent_asin", "asin"], dtype=pl.Utf8).alias(
+            "item_id"
+        ),
         _required_column(products, ["title"], dtype=pl.Utf8).alias("title"),
         _optional_column(products, ["category", "main_category"], dtype=pl.Utf8).alias("category"),
         _optional_column(products, ["brand", "store"], dtype=pl.Utf8).alias("brand"),

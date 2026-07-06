@@ -3,11 +3,10 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 import polars as pl
-
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
