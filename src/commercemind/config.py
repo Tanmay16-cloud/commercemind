@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -31,13 +32,17 @@ class Settings(BaseSettings):
     artifacts_dir: Path | None = None
     models_dir: Path | None = None
     indexes_dir: Path | None = None
+    vector_index_dir: Path | None = None
+    ranker_model_path: Path | None = None
     reports_dir: Path | None = None
 
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/commercemind"
+    catalog_source: str = "sample"
     api_host: str = "127.0.0.1"
     api_port: int = 8000
 
     embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_backend: Literal["hashing", "sentence_transformer"] = "hashing"
     retrieval_top_k: int = 100
     ranking_top_k: int = 20
 

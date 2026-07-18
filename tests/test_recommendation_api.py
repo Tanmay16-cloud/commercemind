@@ -21,3 +21,9 @@ def test_recommendations_endpoint_returns_ranked_results() -> None:
     assert len(payload["results"]) == 2
     assert payload["results"][0]["item_id"] == "sku-trail-shoes-001"
     assert payload["results"][0]["score"] > 0
+
+
+def test_recommendations_endpoint_rejects_blank_user_id() -> None:
+    response = client.post("/recommendations", json={"user_id": "   ", "top_k": 3})
+
+    assert response.status_code == 422

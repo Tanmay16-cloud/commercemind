@@ -4,6 +4,7 @@ from commercemind.ranking.rankers import LinearProductRanker, ProductRanker
 from commercemind.retrieval.baseline import LexicalRetriever
 from commercemind.retrieval.hybrid import HybridRetriever, SearchRetriever
 from commercemind.retrieval.vector import VectorRetriever
+from commercemind.retrieval.vector_index import FaissVectorIndex
 from commercemind.schemas import ItemResult, SearchRequest, SearchResponse
 from commercemind.services.sample_data import default_products
 
@@ -14,6 +15,9 @@ class SearchService:
         products: pl.DataFrame | None = None,
         retriever: SearchRetriever | None = None,
         ranker: ProductRanker | None = None,
+        vector_index: FaissVectorIndex | None = None,
+        embedding_backend: str | None = None,
+        embedding_model_name: str | None = None,
         candidate_pool_multiplier: int = 5,
     ) -> None:
         if candidate_pool_multiplier <= 0:
@@ -23,7 +27,12 @@ class SearchService:
         self._retriever = retriever or HybridRetriever(
             [
                 LexicalRetriever(self._products),
-                VectorRetriever(self._products),
+                VectorRetriever(
+                    self._products,
+                    vector_index=vector_index,
+                    embedding_backend=embedding_backend,
+                    embedding_model_name=embedding_model_name,
+                ),
             ]
         )
         self._ranker = ranker or LinearProductRanker(self._products)

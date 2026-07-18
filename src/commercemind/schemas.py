@@ -1,4 +1,8 @@
-from pydantic import BaseModel, Field
+from typing import Annotated
+
+from pydantic import BaseModel, Field, StringConstraints
+
+NonBlankString = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 class HealthResponse(BaseModel):
@@ -7,13 +11,35 @@ class HealthResponse(BaseModel):
     environment: str = Field(description="Runtime environment name.")
 
 
+class EndpointMetricsResponse(BaseModel):
+    request_count: int = Field(ge=0, description="Total requests recorded.")
+    error_count: int = Field(ge=0, description="Requests that raised an error.")
+    empty_result_count: int = Field(ge=0, description="Successful requests with no results.")
+    total_latency_ms: float = Field(ge=0.0, description="Total observed latency in milliseconds.")
+    average_latency_ms: float = Field(ge=0.0, description="Average request latency.")
+    max_latency_ms: float = Field(ge=0.0, description="Maximum observed request latency.")
+    error_rate: float = Field(ge=0.0, le=1.0, description="Fraction of requests that failed.")
+    empty_result_rate: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Fraction of requests that returned no results.",
+    )
+
+
+class MetricsResponse(BaseModel):
+    endpoints: dict[str, EndpointMetricsResponse] = Field(
+        default_factory=dict,
+        description="Runtime metrics grouped by endpoint name.",
+    )
+
+
 class SearchRequest(BaseModel):
-    query: str = Field(min_length=1, description="Natural language product search query.")
+    query: NonBlankString = Field(description="Natural language product search query.")
     top_k: int = Field(default=10, ge=1, le=100, description="Number of results to return.")
 
 
 class RecommendationRequest(BaseModel):
-    user_id: str = Field(min_length=1, description="User identifier for personalization.")
+    user_id: NonBlankString = Field(description="User identifier for personalization.")
     top_k: int = Field(default=10, ge=1, le=100, description="Number of items to return.")
 
 

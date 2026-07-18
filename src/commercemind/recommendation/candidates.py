@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import Counter
 from dataclasses import dataclass
 
 import polars as pl
@@ -27,8 +26,8 @@ class UserPreferenceProfile:
 
     def as_query(self) -> str:
         terms = [
-            *sorted(self.category_weights, key=self.category_weights.get, reverse=True),
-            *sorted(self.brand_weights, key=self.brand_weights.get, reverse=True),
+            *sorted(self.category_weights, key=self.category_weights.__getitem__, reverse=True),
+            *sorted(self.brand_weights, key=self.brand_weights.__getitem__, reverse=True),
         ]
         return " ".join(terms)
 
@@ -81,8 +80,8 @@ class PersonalizedCandidateGenerator:
         return [*ranked, *fallback][:top_k]
 
     def build_user_profile(self, user_id: str) -> UserPreferenceProfile:
-        category_weights: Counter[str] = Counter()
-        brand_weights: Counter[str] = Counter()
+        category_weights: dict[str, float] = {}
+        brand_weights: dict[str, float] = {}
         seen_item_ids: set[str] = set()
 
         for interaction in self._interactions:
@@ -132,12 +131,12 @@ class PersonalizedCandidateGenerator:
         return category_score + 0.5 * brand_score
 
     def _build_popularity_scores(self) -> dict[str, float]:
-        scores: Counter[str] = Counter()
+        scores: dict[str, float] = {}
 
         for interaction in self._interactions:
             item_id = str(interaction["item_id"])
             weight = EVENT_WEIGHTS.get(str(interaction.get("event_type", "view")), 1.0)
-            scores[item_id] += weight
+            scores[item_id] = scores.get(item_id, 0.0) + weight
 
         max_score = max(scores.values(), default=0.0)
         if max_score == 0:
@@ -146,6 +145,7 @@ class PersonalizedCandidateGenerator:
         return {item_id: score / max_score for item_id, score in scores.items()}
 
 
-def _add_weight(counter: Counter[str], value: object, weight: float) -> None:
+def _add_weight(counter: dict[str, float], value: object, weight: float) -> None:
     if value is not None:
-        counter[str(value)] += weight
+        key = str(value)
+        counter[key] = counter.get(key, 0.0) + weight

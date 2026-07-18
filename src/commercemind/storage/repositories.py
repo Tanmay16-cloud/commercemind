@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import SupportsFloat, cast
+
 import polars as pl
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -82,4 +84,4 @@ def _optional_text(value: object) -> str | None:
 def _optional_float(value: object) -> float | None:
     if value is None:
         return None
-    return float(value)
+    return float(cast(SupportsFloat, value))

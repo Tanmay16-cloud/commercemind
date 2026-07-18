@@ -42,6 +42,8 @@ class DatasetPaths:
 
 def get_dataset_paths(dataset_name: str = DEFAULT_DATASET_NAME) -> DatasetPaths:
     settings = get_settings()
+    if settings.raw_data_dir is None or settings.processed_data_dir is None:
+        raise RuntimeError("dataset directories are not configured")
 
     raw_dir = settings.raw_data_dir / dataset_name
     processed_dir = settings.processed_data_dir / dataset_name

@@ -1,3 +1,4 @@
+.git/
 .venv/
 __pycache__/
 *.py[cod]
@@ -7,8 +8,6 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .coverage
-.coverage.*
-coverage.xml
 htmlcov/
 
 *.egg-info/
@@ -25,10 +24,6 @@ artifacts/
 reports/
 outputs/
 work/
-*.db
-*.sqlite
-*.sqlite3
-*.log
 
 *.parquet
 *.npy
@@ -40,7 +35,8 @@ work/
 
 .DS_Store
 Thumbs.db
-.idea/
-.vscode/
+.github/
 .agents/
 .codex/
+tests/
+docs/

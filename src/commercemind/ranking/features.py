@@ -1,10 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import SupportsFloat, cast
 
 import polars as pl
 
 from commercemind.retrieval.baseline import RetrievalCandidate, tokenize
+
+RANKING_FEATURE_NAMES = (
+    "retrieval_score",
+    "title_match",
+    "category_match",
+    "brand_match",
+    "description_match",
+    "price_intent_match",
+)
 
 
 @dataclass(frozen=True)
@@ -15,6 +25,16 @@ class ProductRankingFeatures:
     brand_match: float
     description_match: float
     price_intent_match: float
+
+    def as_vector(self) -> list[float]:
+        return [
+            self.retrieval_score,
+            self.title_match,
+            self.category_match,
+            self.brand_match,
+            self.description_match,
+            self.price_intent_match,
+        ]
 
 
 class ProductFeatureStore:
@@ -30,8 +50,10 @@ class ProductFeatureStore:
         self._min_price = min(prices, default=0.0)
         self._max_price = max(prices, default=0.0)
 
-    def build_features(self,query: str,
-    candidate: RetrievalCandidate,
+    def build_features(
+        self,
+        query: str,
+        candidate: RetrievalCandidate,
     ) -> ProductRankingFeatures:
         row = self._products_by_item_id.get(candidate.item_id, {})
         query_tokens = set(tokenize(query))
@@ -50,7 +72,11 @@ class ProductFeatureStore:
         if price is None:
             return 0.0
 
-        normalized_price = _normalize_price(float(price), self._min_price, self._max_price)
+        normalized_price = _normalize_price(
+            float(cast(SupportsFloat, price)),
+            self._min_price,
+            self._max_price,
+        )
         budget_terms = {"affordable", "budget", "cheap", "low", "value"}
         premium_terms = {"premium", "luxury", "expensive", "high", "pro"}
 

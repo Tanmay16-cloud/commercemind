@@ -5,14 +5,24 @@ class TransformError(RuntimeError):
     pass
 
 
-def _required_column(frame: pl.DataFrame, candidates: list[str], *, dtype: pl.DataType) -> pl.Expr:
+def _required_column(
+    frame: pl.DataFrame,
+    candidates: list[str],
+    *,
+    dtype: type[pl.DataType],
+) -> pl.Expr:
     for name in candidates:
         if name in frame.columns:
             return pl.col(name).cast(dtype, strict=False)
     raise TransformError(f"Missing required column. Expected one of: {candidates}")
 
 
-def _optional_column(frame: pl.DataFrame, candidates: list[str], *, dtype: pl.DataType) -> pl.Expr:
+def _optional_column(
+    frame: pl.DataFrame,
+    candidates: list[str],
+    *,
+    dtype: type[pl.DataType],
+) -> pl.Expr:
     for name in candidates:
         if name in frame.columns:
             return pl.col(name).cast(dtype, strict=False)

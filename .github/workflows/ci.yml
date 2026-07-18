@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Lint, Test, And Smoke Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run Ruff
+        run: ruff check src tests
+
+      - name: Run MyPy
+        run: mypy src
+
+      - name: Run tests
+        run: python -m pytest --basetemp work/pytest --cov=src/commercemind --cov-report=term --cov-fail-under=90
+
+      - name: Build package wheel
+        run: python -m pip wheel . --no-deps --wheel-dir dist
+
+      - name: Generate demo evaluation report
+        run: python -m commercemind.evaluation.run_experiment --benchmark demo --k 2 --output-dir reports/ci
+
+      - name: Generate demo performance report
+        run: python -m commercemind.evaluation.run_performance_benchmark --benchmark demo --requests 5 --top-k 2 --output-dir reports/ci-performance
+
+      - name: Generate synthetic CI dataset
+        run: python -m commercemind.data.generate_synthetic_dataset --dataset synthetic_ci --products 50 --users 10 --interactions 200 --seed 7
+
+      - name: Generate synthetic CI recommendation report
+        run: python -m commercemind.evaluation.run_experiment --dataset synthetic_ci --k 5 --output-dir reports/ci-recommendation-synthetic
+
+      - name: Generate synthetic CI performance report
+        run: python -m commercemind.evaluation.run_performance_benchmark --dataset synthetic_ci --requests 5 --top-k 2 --output-dir reports/ci-performance-synthetic
+
+      - name: Train demo ranker
+        run: python -m commercemind.ranking.training --benchmark demo --output-path artifacts/models/ci-ranker.json
+
+      - name: Build demo vector index
+        run: python -m commercemind.retrieval.build_index --source sample --output-dir artifacts/indexes/ci-products
+
+      - name: Validate Docker Compose config
+        run: docker compose config --quiet

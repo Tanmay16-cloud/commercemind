@@ -3,7 +3,7 @@ name = "commercemind"
 version = "0.1.0"
 description = "Advanced retrieval, ranking, and semantic search system for e-commerce product discovery."
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.12,<3.13"
 authors = [
   { name = "Tanmay" }
 ]
@@ -14,36 +14,26 @@ dependencies = [
   "pydantic>=2.7,<3.0",
   "pydantic-settings>=2.3,<3.0",
   "numpy>=1.26,<3.0",
-  "pandas>=2.2,<3.0",
   "polars>=1.2,<2.0",
   "pyarrow>=17.0,<18.0",
-  "scikit-learn>=1.5,<2.0",
-  "scipy>=1.13,<2.0",
   "sentence-transformers>=3.0,<4.0",
   "faiss-cpu>=1.8,<2.0",
-  "rank-bm25>=0.2.2,<1.0",
-  "lightgbm>=4.4,<5.0",
   "sqlalchemy>=2.0,<3.0",
-  "alembic>=1.13,<2.0",
   "psycopg[binary]>=3.2,<4.0",
-  "httpx>=0.27,<1.0",
-  "orjson>=3.10,<4.0",
-  "python-multipart>=0.0.9,<1.0",
   "structlog>=24.2,<25.0",
-  "tenacity>=8.5,<9.0",
 ]
 
+[project.scripts]
+commercemind-evaluate = "commercemind.evaluation.run_experiment:main"
+commercemind-seed-db = "commercemind.storage.load_dataset:main"
+commercemind-build-index = "commercemind.retrieval.build_index:main"
+commercemind-train-ranker = "commercemind.ranking.training:main"
+commercemind-benchmark = "commercemind.evaluation.run_performance_benchmark:main"
+commercemind-generate-synthetic = "commercemind.data.generate_synthetic_dataset:main"
+
 [project.optional-dependencies]
-training = [
-  "torch>=2.3,<3.0",
-  "transformers>=4.42,<5.0",
-  "datasets>=2.20,<3.0",
-  "mlflow>=2.14,<3.0",
-]
-monitoring = [
-  "evidently>=0.4.30,<0.5",
-]
 dev = [
+  "httpx>=0.27,<1.0",
   "pytest>=8.2,<9.0",
   "pytest-asyncio>=0.23,<1.0",
   "pytest-cov>=5.0,<6.0",
@@ -64,7 +54,7 @@ where = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -86,10 +76,9 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 no_implicit_optional = true
 mypy_path = "src"
-
