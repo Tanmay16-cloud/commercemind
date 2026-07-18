@@ -17,6 +17,7 @@ def test_github_actions_ci_workflow_has_quality_gates() -> None:
         'python-version: "3.12"',
         'python -m pip install -e ".[dev]"',
         "ruff check src tests",
+        "mkdir -p work",
         "python -m pytest --basetemp work/pytest",
         "python -m commercemind.evaluation.run_experiment --benchmark demo --k 2",
         "python -m commercemind.evaluation.run_performance_benchmark --benchmark demo",

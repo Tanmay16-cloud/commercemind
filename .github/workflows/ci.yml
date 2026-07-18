@@ -38,7 +38,9 @@ jobs:
         run: mypy src
 
       - name: Run tests
-        run: python -m pytest --basetemp work/pytest --cov=src/commercemind --cov-report=term --cov-fail-under=90
+        run: |
+          mkdir -p work
+          python -m pytest --basetemp work/pytest --cov=src/commercemind --cov-report=term --cov-fail-under=90
 
       - name: Build package wheel
         run: python -m pip wheel . --no-deps --wheel-dir dist
